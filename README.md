@@ -1,4 +1,6 @@
-# 🐾 SafePet_backend
+# 🐾 SSE_SafePet_backend
+
+da aggiornare con info su sustainable
 
 ## 📚 Indice
 * [Overview backend](#overview-backend)
