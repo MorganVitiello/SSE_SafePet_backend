@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# JMeter test data
+jmeter/*.csv
+
+dependency-reduced-pom.xml
