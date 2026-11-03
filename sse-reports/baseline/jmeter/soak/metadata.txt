@@ -1,0 +1,26 @@
+System Metadata
+-------------------------
+CPU Model:      12th Gen Intel(R) Core(TM) i5-12450H
+CPU Cores:      12
+Total Memory:   14Gi
+OS:             Linux morgan-IdeaPad 7.0.0-38-generic #38-Ubuntu SMP PREEMPT_DYNAMIC Fri Sep  4 09:10:14 UTC 2026 x86_64 GNU/Linux
+
+JMeter Test Metadata
+-------------------------
+Start time:  2026-11-03 00:18:57
+End time:    2026-11-03 00:29:01
+JMX file:    jmeter/soak_test.jmx
+Granularity: 15000ms
+
+Thread Groups:
+-------------------------
+TG1 -> threads: 50, ramp-up: 20, duration: 600, delay: 0
+
+Endpoints used:
+-------------------------
+/gestionePet/dettaglioPet/${petId}
+/gestionePet/visualizzaElencoPet
+/gestioneUtente/visualizzaDettagliVeterinari/${vetId}
+/gestioneUtente/visualizzaProfiloProprietario
+/reportCliniche/elencoVeterinari
+/reportCliniche/mostraMappa/${lat}/${lon}

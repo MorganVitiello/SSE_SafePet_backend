@@ -1,0 +1,28 @@
+System Metadata
+-------------------------
+CPU Model:      12th Gen Intel(R) Core(TM) i5-12450H
+CPU Cores:      12
+Total Memory:   14Gi
+OS:             Linux morgan-IdeaPad 7.0.0-38-generic #38-Ubuntu SMP PREEMPT_DYNAMIC Fri Sep  4 09:10:14 UTC 2026 x86_64 GNU/Linux
+
+JMeter Test Metadata
+-------------------------
+Start time:  2026-11-03 00:12:13
+End time:    2026-11-03 00:13:01
+JMX file:    jmeter/spike_test.jmx
+Granularity: 1000ms
+
+Thread Groups:
+-------------------------
+TG1 -> threads: 50, ramp-up: 5, duration: 15, delay: 0
+TG2 -> threads: 300, ramp-up: 1, duration: 15, delay: 0
+TG3 -> threads: 50, ramp-up: 5, duration: 15, delay: 0
+
+Endpoints used:
+-------------------------
+/gestionePet/dettaglioPet/${petId}
+/gestionePet/visualizzaElencoPet
+/gestioneUtente/visualizzaDettagliVeterinari/${vetId}
+/gestioneUtente/visualizzaProfiloProprietario
+/reportCliniche/elencoVeterinari
+/reportCliniche/mostraMappa/${lat}/${lon}
