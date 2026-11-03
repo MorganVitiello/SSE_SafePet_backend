@@ -23,7 +23,10 @@ public class ProprietariPetsSeeder implements CommandLineRunner {
     private final ProprietarioRepository proprietarioRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("true")
+    @Value("${app.db.seeder.enabled:false}")
+    private boolean seedEnabled;
+
+    @Value("${app.db.seeder.reset:false}")
     private boolean resetDatabase;
 
     public ProprietariPetsSeeder(ProprietarioRepository proprietarioRepository, PasswordEncoder passwordEncoder) {
@@ -34,6 +37,11 @@ public class ProprietariPetsSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
+        if (!seedEnabled) {
+            System.out.println("Seeder Proprietari disabilitato.");
+            return;
+        }
+
         if (resetDatabase) {
             proprietarioRepository.deleteAll();
             System.out.println("Eliminazione Proprietari");

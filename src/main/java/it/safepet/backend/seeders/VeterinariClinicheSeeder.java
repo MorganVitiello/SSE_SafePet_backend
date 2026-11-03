@@ -22,7 +22,10 @@ public class VeterinariClinicheSeeder implements CommandLineRunner {
     private final ClinicaRepository clinicaRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("true")
+    @Value("${app.db.seeder.enabled:false}")
+    private boolean seedEnabled;
+
+    @Value("${app.db.seeder.reset:false}")
     private boolean resetDatabase;
 
     public VeterinariClinicheSeeder(ClinicaRepository clinicaRepository, PasswordEncoder passwordEncoder) {
@@ -33,10 +36,14 @@ public class VeterinariClinicheSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
+        if (!seedEnabled) {
+            System.out.println("Seeder Cliniche disabilitato.");
+            return;
+        }
+
         if (resetDatabase) {
-            System.out.println("### Reset tabelle veterinari, cliniche, orari_di_apertura");
             clinicaRepository.deleteAll();
-            System.out.println("### Tabelle veterinari, cliniche, orari_di_apertura resettate con successo");
+            System.out.println("Eliminazione Cliniche");
         }
 
         if (clinicaRepository.count() == 0) {

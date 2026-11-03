@@ -3,12 +3,12 @@
 # SCRIPT: run_jmeter.sh
 # SCOPO:  1. Rigenera i token JWT freschi chiamando generate_test_data.sh
 #         2. Esegue JMeter in modalità NON-GUI (CLI)
-#         3. Genera la dashboard HTML con tutti i grafici
+#         3. Genera la dashboard HTML con i grafici (granularità automatica)
 #         4. Salva i metadati hardware e del test in metadata.txt
 # USO:    ./jmeter/run_jmeter.sh jmeter/load_test.jmx sse-reports/baseline/jmeter/load
 # ==============================================================================
 
-# 1. Percorso dell'eseguibile di JMeter 5.6.3 che abbiamo scaricato nella tua Home
+# 1. Percorso dell'eseguibile di JMeter 5.6.3
 JMETER_BIN="$HOME/apache-jmeter-5.6.3/bin/jmeter"
 
 # 2. Controllo dei parametri passati allo script ($1 = file .jmx, $2 = cartella output)
@@ -25,18 +25,17 @@ OUTPUT_DIR="$2"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 "$SCRIPT_DIR/generate_test_data.sh"
 
-# 4. Spostiamoci nella cartella jmeter/ così il percorso relativo './test_data.csv'
-#    dentro il file .jmx funziona sempre, da qualunque cartella tu lanci lo script!
+# 4. Definizione dei percorsi assoluti e della root del progetto
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-# Convertiamo i percorsi in percorsi assoluti prima di fare cd
 JMX_ABS="$(realpath "$JMX_FILE")"
 OUT_ABS="$PROJECT_ROOT/$OUTPUT_DIR"
+RESULTS_JTL="$OUT_ABS/results.jtl"
 
-# 5. Puliamo eventuali risultati precedenti nella stessa cartella (JMeter richiede che la cartella report sia vuota)
-rm -rf "$OUT_ABS/results.jtl" "$OUT_ABS/report"
+# 5. Pulizia dei risultati precedenti
+rm -rf "$RESULTS_JTL" "$OUT_ABS/report"
 mkdir -p "$OUT_ABS"
 
-# 6. Raccolta informazioni sull'Hardware del tuo PC Linux per il file metadata.txt
+# 6. Raccolta informazioni sull'Hardware del PC Linux per il file metadata.txt
 CPU_MODEL=$(lscpu | grep -E "Model name|Nome modello" | sed 's/.*:\s*//')
 CPU_CORES=$(nproc)
 TOTAL_MEM=$(free -h | awk '/Mem:/ {print $2}')
@@ -49,21 +48,46 @@ DURATION_LIST=($(grep -oP '(?<=<longProp name="ThreadGroup.duration">)\d+' "$JMX
 DELAY_LIST=($(grep -oP '(?<=<longProp name="ThreadGroup.delay">)\d+' "$JMX_ABS"))
 ENDPOINTS=$(grep -oP '(?<=<stringProp name="HTTPSampler.path">).*(?=</stringProp>)' "$JMX_ABS" | sort -u)
 
-# 8. Esecuzione del test JMeter da riga di comando (senza interfaccia grafica!)
-#    -n = modalita' NON-GUI
-#    -t = file JMX del test plan
-#    -l = file JTL in cui salvare i log grezzi di ogni singola richiesta
-#    -e -o = genera automaticamente il report HTML con i grafici a fine test
+# 8. Riconoscimento automatico della granularità in base al nome del file .jmx
+TEST_NAME=$(basename "$JMX_FILE" .jmx)
+case "$TEST_NAME" in
+    *spike*)
+        GRANULARITY=1000   # 1 secondo (ottimale per test rapidi da 45s)
+        echo "[Auto-Config] Rilevato SPIKE test -> Granularità: 1s (1000ms)"
+        ;;
+    *stress*)
+        GRANULARITY=2000   # 2 secondi (ottimale per test da 60s)
+        echo "[Auto-Config] Rilevato STRESS test -> Granularità: 2s (2000ms)"
+        ;;
+    *load*)
+        GRANULARITY=5000   # 5 secondi (ottimale per test da 120s)
+        echo "[Auto-Config] Rilevato LOAD test -> Granularità: 5s (5000ms)"
+        ;;
+    *soak*)
+        GRANULARITY=15000  # 15 secondi (ottimale per test lunghi da 600s)
+        echo "[Auto-Config] Rilevato SOAK test -> Granularità: 15s (15000ms)"
+        ;;
+    *)
+        GRANULARITY=5000   # Default di sicurezza
+        echo "[Auto-Config] Test generico -> Granularità di default: 5s (5000ms)"
+        ;;
+esac
+
+# 9. Esecuzione del test JMeter da riga di comando (CLI)
 echo "Avvio del test JMeter in modalità CLI..."
 cd "$SCRIPT_DIR"
 START_TIME=$(date +"%Y-%m-%d %H:%M:%S")
 
-"$JMETER_BIN" -n -t "$JMX_ABS" -l "$OUT_ABS/results.jtl" -e -o "$OUT_ABS/report"
+"$JMETER_BIN" -n \
+  -t "$JMX_ABS" \
+  -l "$RESULTS_JTL" \
+  -Jjmeter.reportgenerator.overall_granularity="$GRANULARITY" \
+  -e -o "$OUT_ABS/report"
 
 END_TIME=$(date +"%Y-%m-%d %H:%M:%S")
 cd "$PROJECT_ROOT"
 
-# 9. Scrittura del file metadata.txt nella cartella di output
+# 10. Scrittura del file metadata.txt nella cartella di output
 META_FILE="$OUT_ABS/metadata.txt"
 {
     echo "System Metadata"
@@ -78,6 +102,7 @@ META_FILE="$OUT_ABS/metadata.txt"
     echo "Start time:  $START_TIME"
     echo "End time:    $END_TIME"
     echo "JMX file:    $JMX_FILE"
+    echo "Granularity: ${GRANULARITY}ms"
     echo ""
     echo "Thread Groups:"
     echo "-------------------------"
